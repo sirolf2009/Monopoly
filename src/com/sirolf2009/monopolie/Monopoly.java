@@ -141,7 +141,7 @@ public class Monopoly implements ICommunicator {
 		nextmenu = new NextMenu(this);
 		for(LookAndFeelInfo look : UIManager.getInstalledLookAndFeels()) {
 			if(look.getName() == "Nimbus") {
-				UIManager.setLookAndFeel("javax.swing.plaf.nimbus.NimbusLookAndFeel");
+				//UIManager.setLookAndFeel("javax.swing.plaf.nimbus.NimbusLookAndFeel");
 				break;
 			}
 		}

@@ -1,5 +1,6 @@
 package com.sirolf2009.monopolie;
 
+import java.awt.Color;
 import java.awt.Component;
 import java.awt.Graphics;
 import java.awt.Image;
@@ -70,7 +71,7 @@ public class JStreetButton extends JButton {
 			popup.add(streetName);
 			popup.add(houses);
 			popup.add(owningTeam);
-			if(Monopoly.localTeam.visitingStreet != street && !Monopoly.localTeam.inJail)
+			if(Monopoly.localTeam.getVisitingStreet() != street && !Monopoly.localTeam.inJail)
 				popup.add(moveTeam);
 			if(street.owningTeam == null && street.visitingTeams.contains(Monopoly.localTeam) && !Monopoly.localTeam.inJail)
 				popup.add(buyStreet);
@@ -105,11 +106,17 @@ public class JStreetButton extends JButton {
 			initPopup();
 		}
 		//TODO Wonderklauwpad en peur
-		FilteredImageSource producer;
-		if(street.visitingTeams.contains(Monopoly.localTeam)) {
-			producer = new FilteredImageSource(square.getImage().getSource(), filter);
-		} else {
-			producer = new FilteredImageSource(dot.getImage().getSource(), filter);
+		FilteredImageSource producer = new FilteredImageSource(dot.getImage().getSource(), filter);
+		for(Team team : street.visitingTeams) {
+			if(team.teamColor.equals(Color.red)) {
+				System.out.println(team + " " + Monopoly.localTeam);
+			}
+			if(team.isSameTeamAs(Monopoly.localTeam)) {
+				producer = new FilteredImageSource(square.getImage().getSource(), filter);
+				Image img = createImage(producer);
+				g.drawImage(img, 0, 0, null);
+				return;
+			}
 		}
 		Image img = createImage(producer);
 		g.drawImage(img, 0, 0, null);
@@ -162,18 +169,21 @@ class MoveTeam implements ActionListener {
 				return;
 			button.initPopup();
 			JStreetButton buttonOld = null;
-			if(Monopoly.localTeam.visitingStreet != null) {
-				buttonOld = Monopoly.instance.streetButtons.get(Monopoly.localTeam.visitingStreet.name);
-				Monopoly.localTeam.visitingStreet.visitingTeams.remove(Monopoly.localTeam);
+			if(Monopoly.localTeam.getVisitingStreet() != null) {
+				buttonOld = Monopoly.instance.streetButtons.get(Monopoly.localTeam.getVisitingStreet().name);
+				Monopoly.localTeam.getVisitingStreet().visitingTeams.remove(Monopoly.localTeam);
 			}
 			button.street.visitingTeams.add(Monopoly.localTeam);
-			Monopoly.localTeam.visitingStreet = button.street;
-			Monopoly.instance.updateStreetButtons();
+			Monopoly.localTeam.setVisitingStreet(button.street);
+			System.out.println("local team is now visiting " + Monopoly.localTeam.getVisitingStreet());
+			button.street.visitingTeams.add(Monopoly.localTeam);
 			Monopoly.instance.getSender().send(new PacketStreetVisit(Monopoly.localTeam, button.street));
 			button.popup.setVisible(false);
 			if(buttonOld != null) {
 				buttonOld.repaint();
 			}
+			Monopoly.instance.updateLocalTeamInfo();
+			Monopoly.instance.updateStreetButtons();
 		}
 	}
 }

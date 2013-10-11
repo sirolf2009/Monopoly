@@ -45,7 +45,9 @@ public class PacketPayTaxes extends Packet {
 	}
 	
 	public void receivedOnClient(Monopoly monopoly) {
+		System.out.println("paying taxes");
 		packetTeam.receivedOnClient(monopoly);
+		packetStreet.receivedOnClient(monopoly);
 		final JPopupMenu popup = new JPopupMenu();
 		popup.add(new JLabel("Deze straat is gekocht door "+packetStreet.owningTeam+"."));
 		popup.add(new JLabel("Je team verliest "+packetStreet.getStreet().calculateTaxes()+" euro."));
@@ -59,6 +61,9 @@ public class PacketPayTaxes extends Packet {
 		popup.setLocation(400, 300);
 		popup.add(ok);
 		popup.setVisible(true);
+		monopoly.localTeam.setVisitingStreet(monopoly.getStreet(packetStreet.name));
+		//monopoly.getStreet(packetStreet.name).visitingTeams.add(Monopoly.localTeam);
+		//monopoly.updateStreetButtons();
 	}
 	
 	public void receivedOnServer(Host host) {}

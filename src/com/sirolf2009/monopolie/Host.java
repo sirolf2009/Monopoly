@@ -356,7 +356,7 @@ public class Host {
 				streets.get(streetName).houses = houses;
 				streets.get(streetName).size = size;
 				if(!owningTeam.equals("null")) {
-					Color teamColor = new Color(Integer.parseInt(reader.readLine()));
+					Color teamColor = new Color(Integer.parseInt(owningTeam));
 					for(Client client : clients) {
 						if(client.team.teamColor.equals(teamColor)) {
 							streets.get(streetName).owningTeam = client.team;

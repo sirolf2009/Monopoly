@@ -13,8 +13,8 @@ public class Team {
 	public int money;
 	public int draws;
 	public boolean inJail;
-	public Street visitingStreet;
-	
+	private Street visitingStreet;
+
 	public Team(Color color) {
 		teamColor = color;
 		money = 500;
@@ -60,6 +60,14 @@ public class Team {
 			}
 		}
 		return ownedStreets;
+	}
+	
+	public Street getVisitingStreet() {
+		return visitingStreet;
+	}
+
+	public void setVisitingStreet(Street visitingStreet) {
+		this.visitingStreet = visitingStreet;
 	}
 	
 }

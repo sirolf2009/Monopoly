@@ -38,7 +38,7 @@ public class Cards {
 			@Override
 			public void draw(Team team) {
 				team.inJail = true;
-				team.visitingStreet = null;
+				team.setVisitingStreet(null);
 				Monopoly.instance.updateStreetButtons();
 			}
 			@Override
