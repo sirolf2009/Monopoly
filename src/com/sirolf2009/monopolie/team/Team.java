@@ -55,7 +55,7 @@ public class Team {
 	public List<Street> getOwnedStreets(Collection<Street> streets) {
 		List<Street> ownedStreets = new ArrayList<Street>();
 		for(Street street : streets) {
-			if(street.owningTeam != null && street.owningTeam.equals(this)) {
+			if(street.owningTeam != null && street.owningTeam.isSameTeamAs(this)) {
 				ownedStreets.add(street);
 			}
 		}

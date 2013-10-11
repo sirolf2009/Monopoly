@@ -15,6 +15,7 @@ import java.io.PrintWriter;
 import java.net.ServerSocket;
 import java.net.URISyntaxException;
 import java.text.NumberFormat;
+import java.util.Calendar;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -63,7 +64,7 @@ public class Host {
 
 	protected JFrame frame;
 
-	public Map<String, Street> streets = new HashMap<String, Street>();
+	private Map<String, Street> streets = new HashMap<String, Street>();
 
 	public static int port = 1941;
 
@@ -272,7 +273,9 @@ public class Host {
 	public void save() {
 		try {
 			File saveFolder = new File(getClass().getProtectionDomain().getCodeSource().getLocation().getFile()+"save");
-			File saveFile = new File(getClass().getProtectionDomain().getCodeSource().getLocation().getFile()+"save/saveFile"+System.currentTimeMillis()+".txt");
+			//String month = (Calendar.getInstance().get(Calendar.MONTH) < 10 ? "0" : "")+Calendar.getInstance().get(Calendar.MONTH);
+			int ID = Integer.parseInt(Calendar.getInstance().get(Calendar.MONTH)+""+Calendar.getInstance().get(Calendar.DAY_OF_MONTH)+""+Calendar.getInstance().get(Calendar.HOUR_OF_DAY)+""+Calendar.getInstance().get(Calendar.SECOND));
+			File saveFile = new File(getClass().getProtectionDomain().getCodeSource().getLocation().getFile()+"save/saveFile"+ID+".txt");
 			System.out.println("save file: "+saveFile.getAbsolutePath());
 			if(!saveFolder.exists()) {
 				saveFolder.mkdirs();
@@ -326,7 +329,9 @@ public class Host {
 		while((line = reader.readLine()) != null) {
 			if(line.startsWith("#Team ")) {
 				Color teamColor = new Color(Integer.parseInt(line.replace("#Team ", "")));
+				System.out.println(teamColor);
 				int money = Integer.parseInt(reader.readLine());
+				System.out.println(money);
 				int draws = Integer.parseInt(reader.readLine());
 				boolean inJail = Boolean.parseBoolean(reader.readLine());
 				for(Client client : clients) {
@@ -334,6 +339,7 @@ public class Host {
 						client.team.money = money;
 						client.team.draws = draws;
 						client.team.inJail = inJail;
+						client.sender.send(new PacketTeam(client.team));
 						break;
 					}
 				}
@@ -344,6 +350,7 @@ public class Host {
 				int houses = Integer.parseInt(reader.readLine());
 				int size = Integer.parseInt(reader.readLine());
 				String owningTeam = reader.readLine();
+				Street oldStreet = streets.get(streetName);
 				streets.get(streetName).x = x;
 				streets.get(streetName).y = y;
 				streets.get(streetName).houses = houses;
@@ -359,6 +366,11 @@ public class Host {
 				} else {
 					streets.get(streetName).owningTeam = null;
 				}
+				if(!streets.get(streetName).equals(oldStreet)) {
+					for(Client client : clients) {
+						client.sender.send(new PacketStreet(streets.get(streetName)));
+					}
+				}
 			}
 		}
 		reader.close();
@@ -371,6 +383,14 @@ public class Host {
 	private void alignBelow(Component one, Component two, int width, int height) {
 		two.setBounds(one.getX(), one.getY()+one.getHeight()+15, width , height);
 	}
+	
+	public void setStreet(String name, Street street) {
+		streets.put(name, street);
+	}
+	
+	public Street getStreet(String name) {
+		return streets.get(name);
+	}
 
 	public static void main(String[] args) {
 		if(args.length != 4) {
@@ -378,6 +398,10 @@ public class Host {
 			args = new String[] {"1941", "8", "false", "-1"};
 		}
 		new Host(args);
+	}
+
+	public Map<String, Street> getStreets() {
+		return streets;
 	}
 
 }
@@ -407,7 +431,7 @@ class AddStreet implements ActionListener {
 		if(e.getID() == 1001) {
 			DefaultListModel<Street> model = new DefaultListModel<Street>();
 			for(Object string : host.lstPopStreets.getSelectedValuesList()) {
-				model.addElement(host.streets.get(string));
+				model.addElement(host.getStreet(string.toString()));
 			}
 			for(int i = 0; i < host.lstStreets.getModel().getSize(); i++) {
 				model.addElement(host.lstStreets.getModel().getElementAt(i));
@@ -427,8 +451,14 @@ class RemoveStreet implements ActionListener {
 	@Override
 	public void actionPerformed(ActionEvent e) {
 		if(e.getID() == 1001) {
-			DefaultListModel<Street> model = new DefaultListModel<Street>();
 			List<Street> removeList = host.lstStreets.getSelectedValuesList();
+			for(Street street : removeList) {
+				Team team = street.owningTeam;
+				street.owningTeam = null;
+				street.houses = 0;
+				host.getClientFromTeam(team).sender.send(new PacketStreet(street));
+			}
+			DefaultListModel<Street> model = new DefaultListModel<Street>();
 			ListModel<Street> oldModel = host.lstStreets.getModel();
 			for(int i = 0; i < oldModel.getSize(); i++) {
 				if(!removeList.contains(oldModel.getElementAt(i))) {
@@ -454,7 +484,7 @@ class DisplayClient implements ListSelectionListener {
 		host.txtDraws.setText(client.team.draws+"");
 		host.txtMoney.setText(client.team.money+"");
 		DefaultListModel<Street> streetModel = new DefaultListModel<Street>();
-		for(Street street : client.team.getOwnedStreets(host.streets.values())) {
+		for(Street street : client.team.getOwnedStreets(host.getStreets().values())) {
 			streetModel.addElement(street);
 		}
 		host.lstStreets.setModel(streetModel);
@@ -469,7 +499,8 @@ class UpdateClient implements ActionListener {
 	}
 	@Override
 	public void actionPerformed(ActionEvent e) {
-		System.out.println("test");
+		if(host.lstClients.getSelectedIndex() == -1)
+			return;
 		Client client = host.clients[host.lstClients.getSelectedIndex()];
 		Team team = client.team;
 		team.draws = Integer.parseInt(host.txtDraws.getText());
@@ -477,7 +508,6 @@ class UpdateClient implements ActionListener {
 		team.money = Integer.parseInt(host.txtMoney.getText());
 		PacketTeam teamPacket = new PacketTeam(client.team);
 		client.getSender().send(teamPacket);
-		System.out.println(host.lstStreets.getModel().getSize());
 		for(int i = 0; i < host.lstStreets.getModel().getSize(); i++) {
 			Street street = host.lstStreets.getModel().getElementAt(i);
 			System.out.println(street);

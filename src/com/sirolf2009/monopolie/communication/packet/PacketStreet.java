@@ -77,12 +77,14 @@ public class PacketStreet extends Packet {
 
 	@Override
 	public void receivedOnClient(Monopoly monopoly) {
-		monopoly.streets.put(name, getStreet());
+		monopoly.setStreet(name, getStreet());
+		monopoly.updateLocalTeamInfo();
+		monopoly.updateStreetButtons();
 	}
 	
 	@Override
 	public void receivedOnServer(Host host) {
-		host.streets.put(name, getStreet());
+		host.setStreet(name, getStreet());
 		host.updateTeamInfoIfDisplayed(owningTeam);
 	}
 

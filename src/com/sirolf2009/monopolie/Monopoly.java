@@ -72,12 +72,11 @@ public class Monopoly implements ICommunicator {
 	public static Team localTeam;
 	private Sender sender;
 	private Receiver receiver;
-	public Map<String, Street> streets = new HashMap<String, Street>();
+	private Map<String, Street> streets = new HashMap<String, Street>();
 	public Map<String, JStreetButton> streetButtons = new HashMap<String, JStreetButton>();
 
 	private Socket socket;
 	public static int port = 1941;
-	//TODO autosaving
 
 	public static Monopoly instance;
 
@@ -326,6 +325,14 @@ public class Monopoly implements ICommunicator {
 		drawTimer = 15;
 		getSender().send(new PacketTeam(localTeam));
 		updateLocalTeamInfo();
+	}
+	
+	public void setStreet(String name, Street street) {
+		streets.put(name, street);
+	}
+	
+	public Street getStreet(String name) {
+		return streets.get(name);
 	}
 
 	@Override

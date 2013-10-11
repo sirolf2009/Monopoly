@@ -43,6 +43,7 @@ public class Receiver implements Runnable {
 			} catch (SocketException e) {
 				System.err.println("Connection with host has been lost. Quiting...");
 				e.printStackTrace();
+				System.exit(0);
 				break;
 			} catch (InterruptedException e) {
 				e.printStackTrace();

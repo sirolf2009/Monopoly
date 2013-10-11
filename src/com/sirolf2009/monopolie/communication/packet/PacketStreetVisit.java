@@ -28,7 +28,6 @@ public class PacketStreetVisit extends Packet {
 	}
 	
 	public void receive(BufferedReader in) throws IOException {
-		System.out.println("receiving street visit");
 		PacketTeam packetTeam = new PacketTeam();
 		packetTeam.receive(in);
 		team = packetTeam.getTeam();
@@ -38,11 +37,7 @@ public class PacketStreetVisit extends Packet {
 	public void receivedOnClient(Monopoly monopoly) {}
 	
 	public void receivedOnServer(Host host) {
-		Street street2 = host.streets.get(streetName);
-		if(street2.owningTeam != null)
-			System.out.println(street2.owningTeam.isSameTeamAs(team));
-		else 
-			System.out.println(street2 + " " + team);
+		Street street2 = host.getStreet(streetName);
 		if(street2.owningTeam != null && !street2.owningTeam.isSameTeamAs(team)) {
 			team.money -= street2.calculateTaxes();
 			PacketPayTaxes packet = new PacketPayTaxes(team, street2);
