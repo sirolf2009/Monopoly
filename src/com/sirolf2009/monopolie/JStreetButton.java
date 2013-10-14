@@ -49,8 +49,8 @@ public class JStreetButton extends JButton {
 
 	public void initPopup() {
 		try {
-			dot = new ImageIcon(ImageIO.read(new File(getClass().getClassLoader().getResource("images/dot.png").toURI())));
-			square = new ImageIcon(ImageIO.read(new File(getClass().getClassLoader().getResource("images/square.png").toURI())));
+			dot = new ImageIcon(ImageIO.read(getClass().getClassLoader().getResourceAsStream("images/dot.png")));
+			square = new ImageIcon(ImageIO.read(getClass().getClassLoader().getResourceAsStream("images/square.png")));
 			popup = new JPopupMenu();
 			popup.setLayout(null);
 			streetName = new JLabel("Straat: "+street.name);
@@ -63,9 +63,9 @@ public class JStreetButton extends JButton {
 			visitingTeams = new JLabel("Bezoekers: "+visitors);
 			moveTeam = new JButton("Verplaats hierheen");
 			moveTeam.addActionListener(new MoveTeam(this));
-			buyStreet = new JButton("Koop de straat €"+street.buyingPrice());
+			buyStreet = new JButton("Koop de straat "+street.buyingPrice());
 			buyStreet.addActionListener(new BuyStreet(this));
-			buyHouse = new JButton("Koop een huis €"+street.housePrice());
+			buyHouse = new JButton("Koop een huis "+street.housePrice());
 			buyHouse.addActionListener(new BuyHouse(this));
 			popup.add(streetName);
 			popup.add(houses);
@@ -77,7 +77,7 @@ public class JStreetButton extends JButton {
 			if(street.owningTeam == Monopoly.localTeam)
 				popup.add(buyHouse);
 			hasPopupInitialized = true;
-		} catch (IOException | URISyntaxException e) {
+		} catch (IOException e) {
 			e.printStackTrace();
 		}
 	}
@@ -106,10 +106,11 @@ public class JStreetButton extends JButton {
 		}
 		//TODO Wonderklauwpad en peur
 		FilteredImageSource producer;
-		if(street.visitingTeams.contains(Monopoly.localTeam)) {
-			producer = new FilteredImageSource(square.getImage().getSource(), filter);
-		} else {
-			producer = new FilteredImageSource(dot.getImage().getSource(), filter);
+		producer = new FilteredImageSource(dot.getImage().getSource(), filter);
+		for(Team team : street.visitingTeams) {
+			if(team.isSameTeamAs(Monopoly.localTeam)) {
+				producer = new FilteredImageSource(square.getImage().getSource(), filter);
+			}
 		}
 		Image img = createImage(producer);
 		g.drawImage(img, 0, 0, null);
@@ -161,6 +162,7 @@ class MoveTeam implements ActionListener {
 			if(Monopoly.localTeam.inJail)
 				return;
 			button.initPopup();
+			System.out.println("moving street "+Monopoly.localTeam.visitingStreet);
 			JStreetButton buttonOld = null;
 			if(Monopoly.localTeam.visitingStreet != null) {
 				buttonOld = Monopoly.instance.streetButtons.get(Monopoly.localTeam.visitingStreet.name);
@@ -174,6 +176,7 @@ class MoveTeam implements ActionListener {
 			if(buttonOld != null) {
 				buttonOld.repaint();
 			}
+			Monopoly.instance.updateStreetButtons();
 		}
 	}
 }

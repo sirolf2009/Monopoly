@@ -10,6 +10,7 @@ public class Client implements ICommunicator {
 	public Sender sender;
 	public Receiver receiver;
 	public Team team;
+	public boolean isConnected;
 
 	public Client(Socket socket) {
 		this.socket = socket;
@@ -37,6 +38,16 @@ public class Client implements ICommunicator {
 	@Override
 	public boolean isRemote() {
 		return true;
+	}
+
+	@Override
+	public boolean isConnected() {
+		return isConnected;
+	}
+
+	@Override
+	public void disconnect() {
+		isConnected = false;
 	}
 
 }

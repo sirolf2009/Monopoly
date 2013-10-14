@@ -5,7 +5,6 @@ import java.awt.Color;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.image.BufferedImage;
-import java.io.File;
 import java.io.IOException;
 import java.net.Socket;
 import java.net.URISyntaxException;
@@ -35,6 +34,7 @@ import jxl.read.biff.BiffException;
 
 import com.sirolf2009.monopolie.card.Cards;
 import com.sirolf2009.monopolie.card.ICard;
+import com.sirolf2009.monopolie.communication.Connector;
 import com.sirolf2009.monopolie.communication.ICommunicator;
 import com.sirolf2009.monopolie.communication.Receiver;
 import com.sirolf2009.monopolie.communication.Sender;
@@ -76,7 +76,9 @@ public class Monopoly implements ICommunicator {
 	public Map<String, JStreetButton> streetButtons = new HashMap<String, JStreetButton>();
 
 	private Socket socket;
+	public Connector connector;
 	public static int port = 1941;
+	private boolean isConnected;
 
 	public static Monopoly instance;
 
@@ -117,15 +119,17 @@ public class Monopoly implements ICommunicator {
 			if(drawCooldown > 0) {
 				drawCooldown--;
 			}
-			Thread.sleep(1000*60*15);
+			updateLocalTeamInfo();
+			Thread.sleep(60000);
+			//1000*60=60 000
 		}
 	}
 
-	private void menuLoop() {
+	private void menuLoop() throws InterruptedException {
 		showNextMenu();
-		while(menuID == 1) {}
+		while(menuID == 1) { Thread.sleep(1); }
 		showNextMenu();
-		while(menuID == 2) {}
+		while(menuID == 2) { Thread.sleep(1); }
 		localTeam = teams[boxTeamColor.getSelectedIndex()];
 		connect(txtIP.getText());
 	}
@@ -141,13 +145,13 @@ public class Monopoly implements ICommunicator {
 		nextmenu = new NextMenu(this);
 		for(LookAndFeelInfo look : UIManager.getInstalledLookAndFeels()) {
 			if(look.getName() == "Nimbus") {
-				UIManager.setLookAndFeel("javax.swing.plaf.nimbus.NimbusLookAndFeel");
+				//UIManager.setLookAndFeel("javax.swing.plaf.nimbus.NimbusLookAndFeel");
 				break;
 			}
 		}
-		BufferedImage imgJotijota = ImageIO.read(new File(getClass().getClassLoader().getResource("images/jotijota.png").toURI()));
-		BufferedImage imgMonopoly = ImageIO.read(new File(getClass().getClassLoader().getResource("images/monopoly.png").toURI()));
-		BufferedImage imgMap = ImageIO.read(new File(getClass().getClassLoader().getResource("images/zalmplaat.png").toURI()));
+		BufferedImage imgJotijota = ImageIO.read(getClass().getResourceAsStream("/images/jotijota.png"));
+		BufferedImage imgMonopoly = ImageIO.read(getClass().getResourceAsStream("/images/monopoly.png"));
+		BufferedImage imgMap = ImageIO.read(getClass().getResourceAsStream("/images/zalmplaat.png"));
 
 		frame = new JFrame("Monopolie Client");
 		frame.setSize(1200, 600);
@@ -193,7 +197,7 @@ public class Monopoly implements ICommunicator {
 
 		map = new JLabel(new ImageIcon(imgMap));
 
-		Workbook workbook = Workbook.getWorkbook(new File(getClass().getClassLoader().getResource("Zalmplaat.xls").toURI()));
+		Workbook workbook = Workbook.getWorkbook(getClass().getResourceAsStream("/Zalmplaat.xls"));
 		Sheet sheet = workbook.getSheet(0);
 		for(int i = 0; i < 69; i++) {
 			Street street = new Street();
@@ -265,7 +269,7 @@ public class Monopoly implements ICommunicator {
 	public void updateLocalTeamInfo() {
 		lblTeamColor.setText(localTeam.toString());
 		lblTeamColor.setForeground(localTeam.teamColor);
-		lblMoney.setText("Geld: €"+localTeam.money);
+		lblMoney.setText("Geld: "+localTeam.money);
 		DefaultListModel<Street> model = new DefaultListModel<Street>();
 		for(Street street : localTeam.getOwnedStreets(streets.values())) {
 			model.addElement(street);
@@ -295,6 +299,7 @@ public class Monopoly implements ICommunicator {
 			receiver = new Receiver(this);
 			new Thread(receiver, "client receiver").start();
 			sender.send(new PacketTeam(localTeam));
+			isConnected = true;
 			System.out.println("connected");
 		} catch (UnknownHostException e) {
 			e.printStackTrace();
@@ -355,6 +360,16 @@ public class Monopoly implements ICommunicator {
 		return false;
 	}
 
+	@Override
+	public boolean isConnected() {
+		return isConnected;
+	}
+	
+	@Override
+	public void disconnect() {
+		isConnected = false;
+	}
+	
 	public void showNextMenu() {
 		CardLayout cl = (CardLayout)(menus.getLayout());
 		cl.show(menus, menuID+"");
@@ -367,6 +382,8 @@ public class Monopoly implements ICommunicator {
 	public static void main(String[] args) {
 		new Monopoly(args);
 	}
+
+
 }
 
 class NextMenu implements ActionListener {
@@ -380,6 +397,7 @@ class NextMenu implements ActionListener {
 	@Override
 	public void actionPerformed(ActionEvent e) {
 		if(e.getID() == 1001) {
+			System.out.println("toggling menu");
 			client.menuID++;
 		}
 	}

@@ -36,8 +36,11 @@ public class PacketMoney extends Packet {
 	
 	@Override
 	public void receivedOnClient(Monopoly monopoly) {
-		if(Monopoly.localTeam.teamColor == teamColor) {
+		if(Monopoly.localTeam.teamColor.equals(teamColor)) {
+			System.out.println("receiving money "+monopoly.localTeam.money);
 			Monopoly.localTeam.money = money;
+			monopoly.updateLocalTeamInfo();
+			System.out.println("receiving money "+monopoly.localTeam.money);
 		}
 	}
 	

@@ -20,6 +20,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import javax.swing.DefaultListCellRenderer;
 import javax.swing.DefaultListModel;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
@@ -43,6 +44,7 @@ import jxl.Workbook;
 import jxl.read.biff.BiffException;
 
 import com.sirolf2009.monopolie.communication.Client;
+import com.sirolf2009.monopolie.communication.Connector;
 import com.sirolf2009.monopolie.communication.packet.PacketStreet;
 import com.sirolf2009.monopolie.communication.packet.PacketTeam;
 import com.sirolf2009.monopolie.street.Street;
@@ -51,6 +53,7 @@ import com.sirolf2009.monopolie.team.Team;
 public class Host {
 
 	private ServerSocket socket;
+	public Connector connector;
 	public Client[] clients;
 
 	protected JTextField txtMoney;
@@ -60,7 +63,7 @@ public class Host {
 	protected JList<Street> lstStreets;
 	protected JPopupMenu popStreets;
 	protected JList<Object> lstPopStreets;
-	protected JList<Team> lstClients;
+	public JList<Team> lstClients;
 
 	protected JFrame frame;
 
@@ -73,8 +76,9 @@ public class Host {
 	public Host(String[] args) {
 		instance = this;
 		try {
+			System.out.println("init");
 			init(args);
-			save();
+			System.out.println("init-ed");
 		} catch (IOException e) {
 			e.printStackTrace();
 		} catch (ClassNotFoundException e) {
@@ -97,7 +101,7 @@ public class Host {
 	private void init(String[] args) throws IOException, ClassNotFoundException, InstantiationException, IllegalAccessException, BiffException, URISyntaxException, UnsupportedLookAndFeelException {
 		port = Integer.parseInt(args[0]);
 
-		Workbook workbook = Workbook.getWorkbook(new File(getClass().getClassLoader().getResource("Zalmplaat.xls").toURI()));
+		Workbook workbook = Workbook.getWorkbook(getClass().getResourceAsStream("/Zalmplaat.xls"));
 		Sheet sheet = workbook.getSheet(0);
 		for(int i = 0; i < 69; i++) {
 			Street street = new Street();
@@ -149,6 +153,7 @@ public class Host {
 		lstClients.setBounds(15, 15, 200, 600-70);
 		lstClients.addListSelectionListener(new DisplayClient(this));
 		lstClients.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+		lstClients.setCellRenderer(new ClientCellRenderer());
 		frame.add(lstClients);
 
 		JLabel lblColor = new JLabel("Team:");
@@ -214,12 +219,13 @@ public class Host {
 
 		frame.setVisible(true);
 
-		socket = new ServerSocket(Monopoly.port);
+		socket = new ServerSocket(port);
 		clients = new Client[Integer.parseInt(args[1])];
 		for(int i = 0; i < clients.length; i++) {
 			try {
 				clients[i] = new Client(socket.accept());
-				while(clients[i].team == null) {}
+				while(clients[i].team == null) { Thread.sleep(1); }
+				clients[i].isConnected = true;
 				DefaultListModel<Team> model = new DefaultListModel<Team>();
 				for(int j = 0; j <= i; j ++) {
 					model.addElement(clients[j].team);
@@ -269,11 +275,19 @@ public class Host {
 		}
 		return null;
 	}
+	
+	public Client getClientFromTeamColor(Color team) {
+		for(Client client : clients) {
+			if(client.team.teamColor.equals(team)) {
+				return client;
+			}
+		}
+		return null;
+	}
 
 	public void save() {
 		try {
 			File saveFolder = new File(getClass().getProtectionDomain().getCodeSource().getLocation().getFile()+"save");
-			//String month = (Calendar.getInstance().get(Calendar.MONTH) < 10 ? "0" : "")+Calendar.getInstance().get(Calendar.MONTH);
 			int ID = Integer.parseInt(Calendar.getInstance().get(Calendar.MONTH)+""+Calendar.getInstance().get(Calendar.DAY_OF_MONTH)+""+Calendar.getInstance().get(Calendar.HOUR_OF_DAY)+""+Calendar.getInstance().get(Calendar.SECOND));
 			File saveFile = new File(getClass().getProtectionDomain().getCodeSource().getLocation().getFile()+"save/saveFile"+ID+".txt");
 			System.out.println("save file: "+saveFile.getAbsolutePath());
@@ -285,6 +299,8 @@ public class Host {
 			}
 			PrintWriter writer = new PrintWriter(saveFile.getAbsolutePath(), "UTF-8");
 			for(Client client : clients) {
+				if(client == null)
+					continue;
 				Team team = client.team;
 				writer.println("#Team "+team.teamColor.getRGB());
 				writer.println(team.money);
@@ -397,6 +413,7 @@ public class Host {
 			System.err.println("Usage <port> <teams> <shouldLoad> <loadVersion>");
 			args = new String[] {"1941", "8", "false", "-1"};
 		}
+		System.out.println("launching with args: "+args[0]+", "+args[1]+", "+args[2]+", "+args[3]);
 		new Host(args);
 	}
 
@@ -510,9 +527,22 @@ class UpdateClient implements ActionListener {
 		client.getSender().send(teamPacket);
 		for(int i = 0; i < host.lstStreets.getModel().getSize(); i++) {
 			Street street = host.lstStreets.getModel().getElementAt(i);
-			System.out.println(street);
 			PacketStreet packetstreet = new PacketStreet(street);
 			client.sender.send(packetstreet);
 		}
 	}
+}
+
+class ClientCellRenderer extends DefaultListCellRenderer {
+	private static final long serialVersionUID = 4692305377583657368L;
+
+	@Override
+	public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+		Component component = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+		if(!Host.instance.getClientFromTeam((Team) value).isConnected) {
+			component.setBackground(Color.red);
+		}
+		return component;
+	}
+	
 }

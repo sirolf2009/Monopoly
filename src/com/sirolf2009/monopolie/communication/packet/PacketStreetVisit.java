@@ -37,11 +37,16 @@ public class PacketStreetVisit extends Packet {
 	public void receivedOnClient(Monopoly monopoly) {}
 	
 	public void receivedOnServer(Host host) {
-		Street street2 = host.getStreet(streetName);
-		if(street2.owningTeam != null && !street2.owningTeam.isSameTeamAs(team)) {
-			team.money -= street2.calculateTaxes();
-			PacketPayTaxes packet = new PacketPayTaxes(team, street2);
+		Street street = host.getStreet(streetName);
+		if(street.owningTeam != null && !street.owningTeam.isSameTeamAs(team)) {
+			host.getClientFromTeam(team).team.money -= street.calculateTaxes();
+			host.getClientFromTeam(street.owningTeam).team.money += street.calculateTaxes();
+			host.updateTeamInfoIfDisplayed(team);
+			PacketMoney money = new PacketMoney(host.getClientFromTeam(street.owningTeam).team);
+			PacketPayTaxes packet = new PacketPayTaxes(street.calculateTaxes(), street.owningTeam.teamColor.getRGB());
+			System.out.println("Owner "+host.getClientFromTeam(street.owningTeam).team+" Visitor "+host.getClientFromTeam(team).team);
 			host.getClientFromTeam(team).sender.send(packet);
+			host.getClientFromTeam(street.owningTeam).sender.send(money);
 		}
 	}
 

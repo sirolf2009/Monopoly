@@ -1,5 +1,6 @@
 package com.sirolf2009.monopolie.communication.packet;
 
+import java.awt.Color;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.BufferedReader;
@@ -12,43 +13,45 @@ import javax.swing.JPopupMenu;
 
 import com.sirolf2009.monopolie.Host;
 import com.sirolf2009.monopolie.Monopoly;
-import com.sirolf2009.monopolie.street.Street;
 import com.sirolf2009.monopolie.team.Team;
 
 public class PacketPayTaxes extends Packet {
 	
-	public Team team;
-	public Street street;
+	/*public Team team;
+	public Street street;*/
+	
+	public int taxes;
+	public int teamColor;
 
 	public PacketTeam packetTeam;
 	public PacketStreet packetStreet;
 
 	public PacketPayTaxes() {}
 	
-	public PacketPayTaxes(Team team, Street street) {
-		this.team = team;
-		this.street = street;
+	public PacketPayTaxes(int taxes, int teamColor) {
+		this.taxes = taxes;
+		this.teamColor = teamColor;
 	}
 	
 	protected void write(PrintWriter out) {
-		packetTeam = new PacketTeam(team);
-		packetTeam.write(out);
-		packetStreet = new PacketStreet(street);
-		packetStreet.write(out);
+		out.println(taxes);
+		out.println(teamColor);
 	}
 	
 	public void receive(BufferedReader in) throws IOException {
-		packetTeam = new PacketTeam();
-		packetTeam.receive(in);
-		packetStreet = new PacketStreet();
-		packetStreet.receive(in);
+		taxes = Integer.valueOf(in.readLine());
+		teamColor = Integer.valueOf(in.readLine());
 	}
 	
 	public void receivedOnClient(Monopoly monopoly) {
-		packetTeam.receivedOnClient(monopoly);
+		System.out.println("paying taxes");
+		//packetTeam.receivedOnClient(monopoly);
+		Monopoly.localTeam.money -= taxes;
+		monopoly.updateLocalTeamInfo();
+		monopoly.updateStreetButtons();
 		final JPopupMenu popup = new JPopupMenu();
-		popup.add(new JLabel("Deze straat is gekocht door "+packetStreet.owningTeam+"."));
-		popup.add(new JLabel("Je team verliest "+packetStreet.getStreet().calculateTaxes()+" euro."));
+		popup.add(new JLabel("Deze straat is gekocht door "+Team.getColorName(new Color(teamColor))+"."));
+		popup.add(new JLabel("Je team verliest "+taxes+" euro."));
 		JButton ok = new JButton("OK");
 		ok.addActionListener(new ActionListener() {
 			@Override

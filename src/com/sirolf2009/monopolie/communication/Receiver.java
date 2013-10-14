@@ -41,9 +41,14 @@ public class Receiver implements Runnable {
 				}
 				Thread.sleep(20);
 			} catch (SocketException e) {
-				System.err.println("Connection with host has been lost. Quiting...");
+				System.err.println("Connection has been lost.");
 				e.printStackTrace();
-				System.exit(0);
+				if(!communicator.isRemote()) {
+					System.exit(0);
+				} else {
+					communicator.disconnect();
+					Host.instance.lstClients.repaint();
+				}
 				break;
 			} catch (InterruptedException e) {
 				e.printStackTrace();

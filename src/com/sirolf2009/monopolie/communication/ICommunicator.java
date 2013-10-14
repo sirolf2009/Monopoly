@@ -8,5 +8,7 @@ public interface ICommunicator {
 	public Receiver getReceiver();
 	public Socket getSocket();
 	public boolean isRemote();
+	public boolean isConnected();
+	public void disconnect();
 
 }

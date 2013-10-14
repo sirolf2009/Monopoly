@@ -31,7 +31,7 @@ public class Team {
 		return team.teamColor.equals(teamColor);
 	}
 
-	private String getColorName(Color color) {
+	public static String getColorName(Color color) {
 		if(color.equals(Color.red)) {
 			return "Rood";
 		} else if (color.equals(Color.blue)) {

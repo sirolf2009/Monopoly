@@ -1,5 +1,5 @@
 #Team -65536
-600
+500
 5
 false
 #Street Werplijn
