@@ -72,7 +72,7 @@ public class Monopoly implements ICommunicator {
 	public static Team localTeam;
 	private Sender sender;
 	private Receiver receiver;
-	private Map<String, Street> streets = new HashMap<String, Street>();
+	public Map<String, Street> streets = new HashMap<String, Street>();
 	public Map<String, JStreetButton> streetButtons = new HashMap<String, JStreetButton>();
 
 	private Socket socket;
@@ -126,12 +126,14 @@ public class Monopoly implements ICommunicator {
 	}
 
 	private void menuLoop() throws InterruptedException {
-		showNextMenu();
-		while(menuID == 1) { Thread.sleep(1); }
-		showNextMenu();
-		while(menuID == 2) { Thread.sleep(1); }
-		localTeam = teams[boxTeamColor.getSelectedIndex()];
-		connect(txtIP.getText());
+		do {
+			menuID = 1;
+			showNextMenu();
+			while(menuID == 1) { Thread.sleep(1); }
+			showNextMenu();
+			while(menuID == 2) { Thread.sleep(1); }
+			localTeam = teams[boxTeamColor.getSelectedIndex()];
+		} while(!connect(txtIP.getText()));
 	}
 
 	private void init(String[] args) throws ClassNotFoundException, InstantiationException, IllegalAccessException, UnsupportedLookAndFeelException, IOException, URISyntaxException, BiffException {
@@ -145,7 +147,7 @@ public class Monopoly implements ICommunicator {
 		nextmenu = new NextMenu(this);
 		for(LookAndFeelInfo look : UIManager.getInstalledLookAndFeels()) {
 			if(look.getName() == "Nimbus") {
-				//UIManager.setLookAndFeel("javax.swing.plaf.nimbus.NimbusLookAndFeel");
+				UIManager.setLookAndFeel("javax.swing.plaf.nimbus.NimbusLookAndFeel");
 				break;
 			}
 		}
@@ -285,12 +287,12 @@ public class Monopoly implements ICommunicator {
 	public void updateStreetButtons() {
 		for(JStreetButton button : streetButtons.values()) {
 			button.street = streets.get(button.street.name);
-			button.initPopup();
+			button.initPopupWithInvoke();
 			button.repaint();
 		}
 	}
 
-	public void connect(String host) {
+	public boolean connect(String host) {
 		try {
 			System.out.println("connecting to "+host+":"+port);
 			socket = new Socket(host, port);
@@ -301,10 +303,11 @@ public class Monopoly implements ICommunicator {
 			sender.send(new PacketTeam(localTeam));
 			isConnected = true;
 			System.out.println("connected");
-		} catch (UnknownHostException e) {
-			e.printStackTrace();
+			return true;
 		} catch (IOException e) {
+			System.err.println("Could not connect");
 			e.printStackTrace();
+			return false;
 		}
 	}
 	
@@ -373,6 +376,15 @@ public class Monopoly implements ICommunicator {
 	public void showNextMenu() {
 		CardLayout cl = (CardLayout)(menus.getLayout());
 		cl.show(menus, menuID+"");
+	}
+	
+	public Team getTeamFromColor(Color color) {
+		for(Team team : teams) {
+			if(team.teamColor.equals(color)) {
+				return team;
+			}
+		}
+		return null;
 	}
 
 	static {

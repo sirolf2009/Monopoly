@@ -15,25 +15,25 @@ import com.sirolf2009.monopolie.team.Team;
 public class PacketStreetBuy extends Packet {
 
 	public String name;
-	public Color buyingTeam;
+	public Color team;
 
 	public PacketStreetBuy() {}
 
 	public PacketStreetBuy(Street street, Team buyingTeam) {
 		this.name = street.name;
-		this.buyingTeam = buyingTeam.teamColor;
+		this.team = buyingTeam.teamColor;
 	}
 
 	@Override
 	protected void write(PrintWriter out) {
 		out.println(name);
-		out.println(buyingTeam.getRGB());
+		out.println(team.getRGB());
 	}
 
 	@Override
 	public void receive(BufferedReader in) throws IOException {
 		name = in.readLine();
-		buyingTeam = new Color(Integer.parseInt(in.readLine()));
+		team = new Color(Integer.parseInt(in.readLine()));
 	}
 
 	@Override
@@ -45,8 +45,11 @@ public class PacketStreetBuy extends Packet {
 	
 	@Override
 	public void receivedOnServer(Host host) {
-		if(host.getStreet(name).owningTeam == null) {
-			host.getClientFromTeamColor(buyingTeam).sender.send(this);
+		if(host.getStreet(name).owningTeam == null && host.getStreet(name).buyingPrice() < host.getClientFromTeamColor(team).team.money) {
+			host.getClientFromTeamColor(team).team.money -= host.getStreet(name).buyingPrice();
+			host.getClientFromTeamColor(team).sender.send(new PacketMoney(host.getClientFromTeamColor(team).team));
+			team = host.getStreet(name).owningTeam.teamColor;
+			host.getClientFromTeamColor(team).sender.send(this);
 		}
 	}
 }

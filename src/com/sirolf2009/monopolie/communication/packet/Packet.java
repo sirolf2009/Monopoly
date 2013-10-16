@@ -38,7 +38,8 @@ public class Packet {
 		registerPacket(1, PacketStreet.class);
 		registerPacket(2, PacketMoney.class);
 		registerPacket(3, PacketStreetVisit.class);
-		registerPacket(4, PacketPayTaxes.class);
+		registerPacket(4, PacketStreetBuy.class);
+		registerPacket(5, PacketPayTaxes.class);
 	}
 
 }

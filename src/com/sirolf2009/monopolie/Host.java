@@ -241,6 +241,8 @@ public class Host {
 			}
 		}
 		System.out.println("clients connected");
+		connector = new Connector(socket);
+		new Thread(connector).start();
 		if(Boolean.parseBoolean(args[2])) {
 			if(Integer.parseInt(args[3]) != -1) {
 				load(Integer.parseInt(args[3]));
@@ -495,7 +497,7 @@ class DisplayClient implements ListSelectionListener {
 	}
 	@Override
 	public void valueChanged(ListSelectionEvent e) {
-		Client client = host.clients[e.getFirstIndex()];
+		Client client = host.clients[host.lstClients.getSelectedIndex()];
 		host.lblTeamColor.setText(client.team+"");
 		host.cbxInJail.setSelected(client.team.inJail);
 		host.txtDraws.setText(client.team.draws+"");

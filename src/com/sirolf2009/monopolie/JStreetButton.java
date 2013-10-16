@@ -8,6 +8,7 @@ import java.awt.event.ActionListener;
 import java.awt.image.FilteredImageSource;
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
 import java.net.URISyntaxException;
 
 import javax.imageio.ImageIO;
@@ -17,7 +18,9 @@ import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JPopupMenu;
+import javax.swing.SwingUtilities;
 
+import com.sirolf2009.monopolie.communication.Receiver;
 import com.sirolf2009.monopolie.communication.packet.PacketMoney;
 import com.sirolf2009.monopolie.communication.packet.PacketStreet;
 import com.sirolf2009.monopolie.communication.packet.PacketStreetVisit;
@@ -45,9 +48,21 @@ public class JStreetButton extends JButton {
 		this.street = street;
 		addActionListener(new ShowPopup(this));
 		filter = new TeamColorFilter(this);
+		this.setDoubleBuffered(true);
+	}
+	
+	public void initPopupWithInvoke() {
+		/*SwingUtilities.invokeLater(new Runnable()
+	    {
+	        public void run()  
+	        {
+	            initPopup();
+	        }
+	    });*/
+		initPopup();
 	}
 
-	public void initPopup() {
+	private void initPopup() {
 		try {
 			dot = new ImageIcon(ImageIO.read(getClass().getClassLoader().getResourceAsStream("images/dot.png")));
 			square = new ImageIcon(ImageIO.read(getClass().getClassLoader().getResourceAsStream("images/square.png")));
@@ -100,9 +115,9 @@ public class JStreetButton extends JButton {
 
 	@Override
 	public void paint(Graphics g) {
-		super.paint(g);
+		//super.paint(g);
 		if(!hasPopupInitialized) {
-			initPopup();
+			initPopupWithInvoke();
 		}
 		//TODO Wonderklauwpad en peur
 		FilteredImageSource producer;
@@ -115,6 +130,13 @@ public class JStreetButton extends JButton {
 		Image img = createImage(producer);
 		g.drawImage(img, 0, 0, null);
 	}
+	
+	public Runnable initPopup = new Runnable() {
+		@Override
+		public void run() {
+			initPopup();
+		}
+	};
 }
 class ShowPopup implements ActionListener {
 	JStreetButton button;
@@ -124,7 +146,7 @@ class ShowPopup implements ActionListener {
 	@Override
 	public void actionPerformed(ActionEvent e) {
 		if(e.getID() == 1001) {
-			button.initPopup();
+			button.initPopupWithInvoke();
 			button.popup.show((Component) e.getSource(), 0, 0);
 		}
 	}
@@ -139,7 +161,7 @@ class BuyStreet implements ActionListener {
 		if(e.getID() == 1001) {
 			if(Monopoly.localTeam.inJail)
 				return;
-			button.initPopup();
+			button.initPopupWithInvoke();
 			if(Monopoly.localTeam.money >= button.street.buyingPrice() && button.street.owningTeam == null && button.street.visitingTeams.contains(Monopoly.localTeam)) {
 				button.street.owningTeam = Monopoly.localTeam;
 				Monopoly.localTeam.money -= button.street.buyingPrice();
@@ -161,12 +183,14 @@ class MoveTeam implements ActionListener {
 		if(e.getID() == 1001) {
 			if(Monopoly.localTeam.inJail)
 				return;
-			button.initPopup();
-			System.out.println("moving street "+Monopoly.localTeam.visitingStreet);
+			button.initPopupWithInvoke();
 			JStreetButton buttonOld = null;
 			if(Monopoly.localTeam.visitingStreet != null) {
 				buttonOld = Monopoly.instance.streetButtons.get(Monopoly.localTeam.visitingStreet.name);
 				Monopoly.localTeam.visitingStreet.visitingTeams.remove(Monopoly.localTeam);
+				if(buttonOld.street.owningTeam != null && buttonOld.street.owningTeam != Monopoly.localTeam) {
+					buttonOld.street.owningTeam = null;
+				}
 			}
 			button.street.visitingTeams.add(Monopoly.localTeam);
 			Monopoly.localTeam.visitingStreet = button.street;
@@ -177,6 +201,7 @@ class MoveTeam implements ActionListener {
 				buttonOld.repaint();
 			}
 			Monopoly.instance.updateStreetButtons();
+			button.popup.setVisible(false);
 		}
 	}
 }
@@ -188,7 +213,7 @@ class BuyHouse implements ActionListener {
 	@Override
 	public void actionPerformed(ActionEvent e) {
 		if(e.getID() == 1001) {
-			button.initPopup();
+			button.initPopupWithInvoke();
 			if(Monopoly.localTeam.money >= button.street.housePrice()) {
 				button.street.houses++;
 				Monopoly.localTeam.money -= button.street.housePrice();

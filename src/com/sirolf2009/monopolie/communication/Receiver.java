@@ -46,6 +46,7 @@ public class Receiver implements Runnable {
 				if(!communicator.isRemote()) {
 					System.exit(0);
 				} else {
+					System.err.println(((Client)communicator).team);
 					communicator.disconnect();
 					Host.instance.lstClients.repaint();
 				}
