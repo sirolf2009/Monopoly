@@ -54,6 +54,7 @@ public class PacketStreet extends Packet {
 
 	@Override
 	public void receive(BufferedReader in) throws IOException {
+		System.out.println("Receiving street");
 		x = Integer.parseInt(in.readLine());
 		y = Integer.parseInt(in.readLine());
 		houses = Integer.parseInt(in.readLine());
@@ -78,6 +79,7 @@ public class PacketStreet extends Packet {
 	@Override
 	public void receivedOnClient(Monopoly monopoly) {
 		monopoly.setStreet(name, getStreet());
+		System.out.println(owningTeam);
 		monopoly.updateLocalTeamInfo();
 		monopoly.updateStreetButtons();
 	}

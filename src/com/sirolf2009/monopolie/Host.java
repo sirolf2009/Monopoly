@@ -93,8 +93,6 @@ public class Host {
 			e.printStackTrace();
 		} catch (UnsupportedLookAndFeelException e) {
 			e.printStackTrace();
-		} finally {
-			save();
 		}
 	}
 
@@ -529,7 +527,9 @@ class UpdateClient implements ActionListener {
 		client.getSender().send(teamPacket);
 		for(int i = 0; i < host.lstStreets.getModel().getSize(); i++) {
 			Street street = host.lstStreets.getModel().getElementAt(i);
+			street.owningTeam = team;
 			PacketStreet packetstreet = new PacketStreet(street);
+			System.out.println("sending street "+packetstreet);
 			client.sender.send(packetstreet);
 		}
 	}

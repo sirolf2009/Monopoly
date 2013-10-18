@@ -113,7 +113,7 @@ public class Monopoly implements ICommunicator {
 		while(true) {
 			drawTimer--;
 			if(drawTimer <= 0) {
-				drawCard();
+				drawCard(true);
 				drawTimer = 15;
 			}
 			if(drawCooldown > 0) {
@@ -121,7 +121,6 @@ public class Monopoly implements ICommunicator {
 			}
 			updateLocalTeamInfo();
 			Thread.sleep(60000);
-			//1000*60=60 000
 		}
 	}
 
@@ -311,11 +310,12 @@ public class Monopoly implements ICommunicator {
 		}
 	}
 	
-	public void drawCard() {
-		if(localTeam.draws <= 0 || drawCooldown > 0)
-			return;
+	public void drawCard(boolean autoDrawn) {
+		/*if(localTeam.draws <= 0 || drawCooldown > 0)
+			return;*/
 		ICard card = cards.getRandomCard();
 		final JPopupMenu cardPopup = new JPopupMenu("Kans");
+		cardPopup.add(new JLabel(autoDrawn ? "Auto Kans" : "Kans"));
 		cardPopup.add(new JLabel(card.description()));
 		JButton ok = new JButton("OK");
 		ok.addActionListener(new ActionListener() {
@@ -427,7 +427,7 @@ class Draw implements ActionListener {
 	@Override
 	public void actionPerformed(ActionEvent e) {
 		if(e.getID() == 1001) {
-			client.drawCard();
+			client.drawCard(false);
 		}
 	}
 
